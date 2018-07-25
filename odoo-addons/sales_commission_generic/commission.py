@@ -73,6 +73,7 @@ class SaleCommission(models.Model):
         ('standard', 'Standard'),
         ('partner', 'Partner Based'),
         ('mix', 'Product/Category/Margin Based'),
+        ('margin', 'Commission based on Margin Amount'),
         ], 'Commission Type', copy=False, default= 'standard', help="Select the type of commission you want to apply.")
     affiliated_partner_commission = fields.Float(string="Affiliated Partner Commission percentage")
     nonaffiliated_partner_commission = fields.Float(string="Non-Affiliated Partner Commission percentage")
@@ -80,6 +81,7 @@ class SaleCommission(models.Model):
                                  help="Sales commission exceptions",
                                  )
     standard_commission = fields.Float(string="Standard Commission percentage")
+    margin_commission = fields.Float(string="Margin Commission percentage")
 
 
     def _check_uniqueness(self):

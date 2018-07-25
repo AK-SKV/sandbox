@@ -46,6 +46,7 @@ class InvoiceSaleCommission(models.Model):
         ('standard', 'Standard'),
         ('partner', 'Partner Based'),
         ('mix', 'Product/Category/Margin Based'),
+        ('margin', 'Commission based on Margin Amount'),
         ], 'Commission Type', copy=False, help="Select the type of commission you want to apply.")
     user_id = fields.Many2one('res.users', string='Sales Person',
                                  help="sales person associated with this type of commission",
@@ -183,6 +184,73 @@ class AccountInvoice(models.Model):
                     invoice_commission_ids.append(invoice_commission_obj.create(invoice_commission_data))
         return invoice_commission_ids
 
+    
+    #=================================================================================================================
+    
+    def get_margin_commission(self, commission_brw, invoice):
+        '''This method calculates commission for Margin Based.
+           @return : List of ids for commission records created.'''
+        invoice_commission_ids = []
+        commission_precentage = commission_brw.standard_commission
+        invoice_commission_obj = self.env['invoice.sale.commission']
+        exception_obj = self.env['sale.commission.exception']
+        sales_person_list = [x.id for x in commission_brw.user_ids]
+        for line in invoice.invoice_line_ids:
+            
+            amount = line.price_subtotal
+            
+            invoice_commission_data = {}
+            exception_ids = self.get_exceptions(line, commission_brw)
+            margin = ((line.price_subtotal / line.quantity) - line.product_id.standard_price)
+            actual_margin_percentage = (margin * 100) / line.product_id.standard_price
+            if line.sol_id:
+                margin = ((line.price_subtotal / line.quantity) - line.sol_id.purchase_price)
+                actual_margin_percentage = (margin * 100) / line.sol_id.purchase_price
+            if (invoice.user_id and invoice.user_id.id in sales_person_list) and invoice.partner_id.is_affiliated == True:
+                
+                #commission_amount = amount * (commission_brw.affiliated_partner_commission / 100)
+                
+                margin = (line.price_unit - line.product_id.standard_price)*line.quantity
+                
+                commission_amount = margin * (commission_brw.margin_commission / 100)
+                
+                name = 'Margin commission " '+ tools.ustr(commission_brw.name) +' (' + tools.ustr(commission_brw.margin_commission) + '%)" for Affiliated Partner "' + tools.ustr(invoice.partner_id.name) + '"'
+                invoice_commission_data = {'name' : name,
+                                   'user_id' : invoice.user_id.id,
+                                   'partner_id' : invoice.partner_id.id,
+                                   'commission_id' : commission_brw.id,
+                                   'type_name' : commission_brw.name,
+                                   'comm_type' : commission_brw.comm_type,
+                                   'partner_type' : 'Affiliated Partner',
+                                   'commission_amount' : commission_amount,
+                                   'invoice_id' : invoice.id,
+                                   'date':datetime.datetime.today()}
+            elif (invoice.user_id and invoice.user_id.id in sales_person_list) and  invoice.partner_id.is_affiliated == False:
+                #commission_amount = amount * (commission_brw.nonaffiliated_partner_commission / 100)
+                
+                margin = (line.price_unit - line.product_id.standard_price)*line.quantity
+                
+                commission_amount = margin * (commission_brw.margin_commission / 100)
+                
+                
+                name = 'Margin commission " '+ tools.ustr(commission_brw.name) +' (' + tools.ustr(commission_brw.margin_commission) + '%)" for Non-Affiliated Partner "' + tools.ustr(invoice.partner_id.name) + '"'
+                invoice_commission_data = {'name' : name,
+                                   'user_id' : invoice.user_id.id,
+                                   'partner_id' : invoice.partner_id.id,
+                                   'commission_id' : commission_brw.id,
+                                   'type_name' : commission_brw.name,
+                                   'comm_type' : commission_brw.comm_type,
+                                   'partner_type' : 'Non-Affiliated Partner',
+                                   'commission_amount' : commission_amount,
+                                   'invoice_id' : invoice.id,
+                                   'date':datetime.datetime.today()}
+            if invoice_commission_data:
+                    invoice_commission_ids.append(invoice_commission_obj.create(invoice_commission_data))
+        return invoice_commission_ids
+    
+    #=================================================================================================================
+    
+    
     def get_mix_commission(self, commission_brw, invoice):
         '''This method calculates commission for Product/Category/Margin Based.
            @return : List of ids for commission records created.'''
@@ -259,6 +327,11 @@ class AccountInvoice(models.Model):
                     invoice_commission_ids = self.get_mix_commission(commission_brw, invoice)
                 elif commission_brw.comm_type == 'partner':
                     invoice_commission_ids = self.get_partner_commission(commission_brw, invoice)
+                #=================================================================================
+                elif commission_brw.comm_type == 'margin':
+                    invoice_commission_ids = self.get_margin_commission(commission_brw, invoice)
+                #=================================================================================
+                
                 else:
                     invoice_commission_ids = self.get_standard_commission(commission_brw, invoice)
         return invoice_commission_ids

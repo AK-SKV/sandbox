@@ -176,6 +176,62 @@ class SaleOrder(models.Model):
 
 
 
+    #====================================================================================================================
+    
+    def get_margin_commission(self, commission_brw, order):
+        '''This method calculates commission for Margin Based.
+           @return : List of ids for commission records created.'''
+        invoice_commission_ids = []
+        invoice_commission_obj = self.env['invoice.sale.commission']
+        sales_person_list = [x.id for x in commission_brw.user_ids]
+        for line in order.order_line:
+            amount = line.price_subtotal
+            invoice_commission_data = {}
+            if (order.user_id and order.user_id.id in sales_person_list) and  order.partner_id.is_affiliated == True:
+                
+                margin = (line.price_unit - line.purchase_price)*line.product_uom_qty
+                
+                commission_amount = margin * (commission_brw.margin_commission / 100)
+                
+                
+                name = 'Margin commission " '+ tools.ustr(commission_brw.name) +' (' + tools.ustr(commission_brw.margin_commission) + '%)" for Affiliated Partner "' + tools.ustr(order.partner_id.name) + '"'
+                invoice_commission_data = {'name' : name,
+                                   'user_id' : order.user_id.id,
+                                   'partner_id' : order.partner_id.id,
+                                   'commission_id' : commission_brw.id,
+                                   'type_name' : commission_brw.name,
+                                   'comm_type' : commission_brw.comm_type,
+                                   'partner_type' : 'Affiliated Partner',
+                                   'commission_amount' : commission_amount,
+                                   'order_id' : order.id,
+                                   'date':datetime.datetime.today()}
+            elif (order.user_id and order.user_id.id in sales_person_list) and  order.partner_id.is_affiliated == False:
+                
+                margin = (line.price_unit - line.purchase_price)*line.product_uom_qty
+                
+                commission_amount = margin * (commission_brw.margin_commission / 100)
+                #commission_amount = amount * (commission_brw.nonaffiliated_partner_commission / 100)
+                
+                name = 'Margin commission " '+ tools.ustr(commission_brw.name) +' (' + tools.ustr(commission_brw.margin_commission) + '%)" for Non-Affiliated Partner "' + tools.ustr(order.partner_id.name) + '"'
+                invoice_commission_data = {'name' : name,
+                                   'user_id' : order.user_id.id,
+                                   'partner_id' : order.partner_id.id,
+                                   'commission_id' : commission_brw.id,
+                                   'type_name' : commission_brw.name,
+                                   'comm_type' : commission_brw.comm_type,
+                                   'partner_type' : 'Non-Affiliated Partner',
+                                   'commission_amount' : commission_amount,
+                                   'order_id' : order.id,
+                                   'date':datetime.datetime.today()}
+            if invoice_commission_data:
+                    invoice_commission_ids.append(invoice_commission_obj.create(invoice_commission_data))
+        return invoice_commission_ids
+    
+    
+    #====================================================================================================================
+    
+    
+    
     @api.multi
     def get_sales_commission(self):
         '''This is control method for calculating commissions(called from workflow).
@@ -194,6 +250,10 @@ class SaleOrder(models.Model):
                     invoice_commission_ids = self.get_mix_commission(commission_brw, order)
                 elif commission_brw.comm_type == 'partner':
                     invoice_commission_ids = self.get_partner_commission(commission_brw, order)
+                #=================================================================================
+                elif commission_brw.comm_type == 'margin':
+                    invoice_commission_ids = self.get_margin_commission(commission_brw, order)
+                #=================================================================================
                 else:
                     invoice_commission_ids = self.get_standard_commission(commission_brw, order)
         return invoice_commission_ids

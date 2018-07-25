@@ -9,7 +9,7 @@ class sale_configuration_settings(models.TransientModel):
 
     commission_configuration = fields.Selection([('sale_order', 'Commission based on sales order'),
                                         ('invoice', 'Commission based on invoice'),
-                                        ('payment', 'commission based on payment')
+                                        ('payment', 'Commission based on payment')
                                        ],string='Generate Commision Entry Based On ',default='payment')
 
     commission_discount_account = fields.Many2one('account.account', domain=[('user_type_id', '=', 'Expenses')],

@@ -4,7 +4,7 @@
 {
     "name" : "Sales Commission on Sales/Invoice/Register Payment based on Configuration.",
     "author" : "BrowseInfo",
-    "version" : "11.0.0.5",
+    "version" : "11.0.0.6",
     "depends" : ['base' , 'sale', 'sale_stock', 'sale_margin'],
     "summary" : "Sales Commission based on Partner, Product, Product Category and Margin calculated on Sales/Invoice/Register Payment",
     "description": """

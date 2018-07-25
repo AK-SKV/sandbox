@@ -29,6 +29,11 @@
                                 <field name="comm_type" />
                                 <field name="standard_commission" attrs="{'invisible': [('comm_type','!=', 'standard')],
                                                     'required': [('comm_type','==', 'standard')]}"/>
+                                
+                                <!--================================================================================== -->
+                                <field name="margin_commission" attrs="{'invisible': [('comm_type','!=', 'margin')],
+                                                    'required': [('comm_type','==', 'margin')]}"/>
+                                <!--================================================================================== -->
                             </group>
                         </group>
                         <group attrs="{'invisible': [('comm_type','!=', 'partner')]}">
