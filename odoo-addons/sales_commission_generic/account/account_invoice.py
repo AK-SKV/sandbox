@@ -210,7 +210,7 @@ class AccountInvoice(models.Model):
                 
                 #commission_amount = amount * (commission_brw.affiliated_partner_commission / 100)
                 
-                margin = (line.price_unit - line.product_id.standard_price)*line.quantity
+                margin = (line.price_unit - line.sol_id.purchase_price)*line.quantity
                 
                 commission_amount = margin * (commission_brw.margin_commission / 100)
                 
@@ -228,7 +228,7 @@ class AccountInvoice(models.Model):
             elif (invoice.user_id and invoice.user_id.id in sales_person_list) and  invoice.partner_id.is_affiliated == False:
                 #commission_amount = amount * (commission_brw.nonaffiliated_partner_commission / 100)
                 
-                margin = (line.price_unit - line.product_id.standard_price)*line.quantity
+                margin = (line.price_unit - line.sol_id.purchase_price)*line.quantity
                 
                 commission_amount = margin * (commission_brw.margin_commission / 100)
                 
