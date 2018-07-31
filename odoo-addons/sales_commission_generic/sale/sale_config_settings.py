@@ -12,8 +12,8 @@ class sale_configuration_settings(models.TransientModel):
                                         ('payment', 'Commission based on payment')
                                        ],string='Generate Commision Entry Based On ',default='payment')
 
-    commission_discount_account = fields.Many2one('account.account', domain=[('user_type_id', '=', 'Expenses')],
-                                                  string="Commission Account")
+    commission_discount_account = fields.Many2one('account.account', domain=[('user_type_id', '=', 'expenses')],
+                                                  string="Commission Acount")
 
     def get_values(self):
         res = super(sale_configuration_settings, self).get_values()
